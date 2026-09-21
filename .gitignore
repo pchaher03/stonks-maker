@@ -1,0 +1,54 @@
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# Environment variables & secrets
+.env
+.env.local
+*.pem
+
+# Data & Model Artifacts (Tracked via Databricks/S3, not Git)
+data/raw/
+data/processed/
+*.p
+*.pkl
+*.h5
+*.onnx
+
+# IDE & OS specific
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

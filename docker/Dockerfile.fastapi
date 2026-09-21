@@ -1,0 +1,31 @@
+FROM python:3.10-slim
+
+# Prevent Python from writing pyc files and buffering stdout/stderr
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Install OpenJDK for PySpark support inside FastAPI container
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    default-jre-headless \
+    build-essential \
+    curl \
+    git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy dependency definition and install
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source code and configurations
+COPY src/ /app/src/
+COPY config/ /app/config/
+
+# Expose API port
+EXPOSE 8000
+
+# Default command
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

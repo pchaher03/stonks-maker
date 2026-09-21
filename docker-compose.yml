@@ -1,0 +1,69 @@
+services:
+  fastapi:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.fastapi
+    container_name: stonks_fastapi
+    ports:
+      - "${API_PORT:-8000}:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: "no"
+    networks:
+      - stonks_network
+
+  jupyter:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.jupyter
+    container_name: stonks_jupyter
+    ports:
+      - "${JUPYTER_PORT:-8888}:8888"
+    env_file:
+      - .env
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - GRANT_SUDO=yes
+    volumes:
+      - ./notebooks:/home/jovyan/work/notebooks
+      - ./src:/home/jovyan/work/src
+      - ./config:/home/jovyan/work/config
+    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
+    restart: "no"
+    networks:
+      - stonks_network
+
+  spark-master:
+    image: apache/spark:3.5.0
+    platform: linux/amd64
+    container_name: stonks_spark_master
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+    command: /opt/spark/sbin/start-master.sh
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    networks:
+      - stonks_network
+
+  spark-worker:
+    image: apache/spark:3.5.0
+    platform: linux/amd64
+    container_name: stonks_spark_worker
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_WORKER_MEMORY=${SPARK_WORKER_MEMORY:-2G}
+      - SPARK_WORKER_CORES=${SPARK_WORKER_CORES:-2}
+    command: /opt/spark/sbin/start-worker.sh spark://spark-master:7077
+    depends_on:
+      - spark-master
+    networks:
+      - stonks_network
+
+networks:
+  stonks_network:
+    driver: bridge
