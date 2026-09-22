@@ -135,7 +135,7 @@ stonks-maker/
 
 3. **Launch Infrastructure via Docker Compose**:
    ```bash
-   docker-compose up --build
+   docker compose up --build
    ```
 
 4. **Access Services**:

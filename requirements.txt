@@ -9,12 +9,13 @@ pyspark>=3.5.0
 pyarrow>=12.0.0
 delta-spark>=3.0.0
 
-# Data Analysis & Utilities
+# Data Analysis & NLP Utilities
 pandas>=2.0.0
 numpy>=1.24.0
 requests>=2.31.0
 python-dotenv>=1.0.0
 pyyaml>=6.0
+nltk>=3.8.1
 
 # Market Data
 yfinance>=0.2.20
