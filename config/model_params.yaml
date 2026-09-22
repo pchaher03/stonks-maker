@@ -1,0 +1,36 @@
+models:
+  regression:
+    n_estimators: 100
+    learning_rate: 0.05
+    max_depth: 5
+    random_state: 42
+
+  classification:
+    direction:
+      n_estimators: 100
+      learning_rate: 0.05
+      max_depth: 4
+      random_state: 42
+    strategy:
+      n_estimators: 100
+      learning_rate: 0.05
+      max_depth: 4
+      random_state: 42
+
+features:
+  technical:
+    - open
+    - high
+    - low
+    - close
+    - volume
+    - sma_20
+    - sma_50
+    - bollinger_upper
+    - bollinger_lower
+    - rsi_14
+  sentiment:
+    - neg_score
+    - neu_score
+    - pos_score
+    - compound_score
