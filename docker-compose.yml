@@ -11,6 +11,7 @@ services:
     volumes:
       - ./src:/app/src
       - ./config:/app/config
+      - ./models:/app/models
     command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
     restart: "no"
     networks:
@@ -32,6 +33,7 @@ services:
       - ./notebooks:/home/jovyan/work/notebooks
       - ./src:/home/jovyan/work/src
       - ./config:/home/jovyan/work/config
+      - ./models:/home/jovyan/work/models
     command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
     restart: "no"
     networks:

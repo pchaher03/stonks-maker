@@ -8,7 +8,7 @@ class ModelExplainer:
     def __init__(self, model: Any, feature_names: list):
         self.model = model
         self.feature_names = feature_names
-        self.explainer = shap.Explainer(self.model)
+        self.explainer = shap.TreeExplainer(self.model)
 
     def explain_instance(self, instance_df: pd.DataFrame) -> Dict[str, Any]:
         """
@@ -18,16 +18,30 @@ class ModelExplainer:
             return {"error": "Empty dataframe provided."}
             
         instance_features = instance_df[self.feature_names]
-        shap_values = self.explainer(instance_features)
+        shap_values = self.explainer.shap_values(instance_features)
         
-        # Format outputs as serializable dictionary
-        vals = shap_values.values[0]
-        if len(vals.shape) > 1:  # Handle multi-class outputs
-            vals = vals[:, 1]
+        # Extract 1D array of feature contributions
+        if isinstance(shap_values, list):
+            vals = shap_values[0]
+        else:
+            vals = shap_values
             
-        contributions = dict(zip(self.feature_names, [float(v) for v in vals]))
+        if vals.ndim == 2:
+            vals = vals[0]
+            
+        contributions = {
+            feature: float(val) 
+            for feature, val in zip(self.feature_names, vals)
+        }
+        
+        # Extract scalar base value safely
+        base_val = self.explainer.expected_value
+        if isinstance(base_val, (list, np.ndarray)):
+            base_val = float(base_val[0])
+        else:
+            base_val = float(base_val)
         
         return {
-            "base_value": float(shap_values.base_values[0] if isinstance(shap_values.base_values, np.ndarray) else shap_values.base_values),
+            "base_value": base_val,
             "feature_contributions": contributions
         }

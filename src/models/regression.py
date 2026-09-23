@@ -30,7 +30,7 @@ class StockPriceRegressor:
             if c not in ["date", "ticker", "target_price"] and pd.api.types.is_numeric_dtype(df[c])
         ]
         
-        clean_df = df.dropna(subset=feature_cols + ["target_price"])
+        clean_df = df.dropna(subset=feature_cols + ["target_price"]).reset_index(drop=True)
         self.feature_names = feature_cols
         
         return clean_df[feature_cols], clean_df["target_price"]
