@@ -13,6 +13,8 @@ Repo: [https://github.com/pchaher03/stonks-maker](https://github.com/pchaher03/s
 ## Functional Requirements
 
 * **End-to-End FastAPI Application**: RESTful API endpoints serving real-time and batch predictions, news sentiment metrics, and model explanations.
+* **Interactive Frontend Dashboard**: Modern React SPA rendering real-time price predictions, trading strategy badges, news sentiment gauges, and dynamic SHAP feature attribution charts.
+* **Automated Testing Suite**: End-to-end unit and integration testing via pytest covering API routes, ML pipelines, and data ingestion logic.
 * **Fully Containerized Infrastructure**: Single `docker-compose` environment orchestrating FastAPI, JupyterLab, PySpark, and Databricks integration.
 * **Machine Learning Pipelines**:
   * **Price Prediction (Regression)**: Forecasts specific stock price values over target horizons.
@@ -21,12 +23,16 @@ Repo: [https://github.com/pchaher03/stonks-maker](https://github.com/pchaher03/s
 * **Financial NLP**: Processes financial news and headlines to calculate sentiment scores used as model input features.
 * **Model Explainability**: Integrates **SHAP** (SHapley Additive exPlanations) to explain individual predictions and feature importances.
 
+
 ---
 
 ## Technologies Used
 
+* **React & Tailwind CSS**: Modern component-driven web interface built with Vite, Tailwind CSS, and Recharts.
 * **FastAPI**: Asynchronous web framework for high-throughput model serving.
-* **PySpark**: Scalable engine for big data feature engineering and batch transformations.
+* **PyTest**: Robust unit and integration testing framework for API endpoints and ML pipelines.
+* **Scikit-Learn (HistGradientBoostingRegressor)**: Advanced gradient-boosted tree algorithms configured via config/model_params.yaml.
+* **PySpark & Delta Lake**: Scalable engine for big data feature engineering and batch transformations.
 * **Databricks**: Cloud data management and Delta Lake storage integration.
 * **Docker & Docker Compose**: Unified containerization for local development and reproducibility.
 * **JupyterLab**: Interactive environment for Exploratory Data Analysis (EDA), feature prototyping, and model validation.
@@ -45,6 +51,7 @@ stonks-maker/
 ├── docker/                      # Dockerfiles for specific services
 │   ├── Dockerfile.fastapi       # FastAPI service container
 │   └── Dockerfile.jupyter       # Jupyter Lab environment with PySpark
+│   └── Dockerfile.frontend      # React web dashboard container
 ├── docker-compose.yml           # Multi-container orchestration
 ├── notebooks/                   # Jupyter Notebooks for exploration
 │   ├── 01_eda.ipynb             # Exploratory Data Analysis
@@ -77,7 +84,19 @@ stonks-maker/
 │           │   └── explain.py     # SHAP analysis routes
 │           └── schemas/         # Pydantic response/request models
 │               └── trading.py
-├── tests/                       # Unit and integration test suites
+├── frontend/                    # React single-page application
+│   ├── public/                  # Static web assets
+│   ├── src/                     # React source code
+│   │   ├── components/          # Dashboard widgets (ShapChart, SentimentGauge, PredictionCard)
+│   │   ├── services/            # Axios API client layer (api.js)
+│   │   ├── App.jsx              # Main web dashboard interface
+│   │   └── main.jsx             # React DOM entrypoint
+│   ├── package.json             # Node.js dependencies & scripts
+│   └── vite.config.js           # Vite build configuration
+├── tests/                       # Automated pytest test suites
+│   ├── test_api.py              # FastAPI endpoint integration tests
+│   ├── test_data.py             # Ingestion & indicator pipeline unit tests
+│   └── test_models.py           # ML inference & SHAP calculation tests
 ├── .env.example                 # Environment variables template
 ├── requirements.txt             # Python dependencies
 ├── .gitignore
@@ -89,33 +108,43 @@ stonks-maker/
 
 ## Module Definitions
 
-### 1. Core (`src/core/`)
+### 1. Frontend (`frontend/`)
+* **`services/api.js`**: Centralized Axios HTTP client handling asynchronous calls to FastAPI backend routes (`POST /v1/predictions`, `GET /v1/news/{ticker}`, `GET /v1/explain/{ticker}`).
+* **`components/`**: Modular dashboard components including `PredictionCard` (target return & strategy badges), `SentimentGauge` (news sentiment dial), and `ShapChart` (Recharts interactive bar chart for SHAP feature importance).   
+
+### 2. Core (`src/core/`)
 * **`config.py`**: Manages environment variables, API keys, and global parameters using Pydantic settings.
 * **`logger.py`**: Provides structured logging across all services.
 
-### 2. Data Engineering (`src/data/`)
+### 3. Data Engineering (`src/data/`)
 * **`ingestion.py`**: Connects to financial data APIs to pull OHLCV (Open, High, Low, Close, Volume) data.
 * **`spark_pipeline.py`**: Uses PySpark to process high-volume historical data and compute technical indicators (RSI, MACD, Bollinger Bands, Moving Averages).
 * **`databricks_client.py`**: Handles read/write operations to Databricks Delta Lake tables.
 
-### 3. NLP Module (`src/nlp/`)
+### 4. NLP Module (`src/nlp/`)
 * **`news_fetcher.py`**: Scrapes or queries financial news feeds for ticker-specific news articles.
 * **`sentiment_analyzer.py`**: Extracts sentiment polarity and intensity scores to supply temporal sentiment features to downstream models.
 
-### 4. Machine Learning & Interpretability (`src/models/`)
-* **`regression.py`**: Implements price target prediction algorithms.
+### 5. Machine Learning & Interpretability (`src/models/`)
+* **`regression.py`**: Implements `HistGradientBoostingRegressor` to predict percentage returns ($\Delta P$) using parameters and feature schemas dynamically loaded from `config/model_params.yaml`.
 * **`classification.py`**:
   * *Direction Classifier*: Outputs binary movement predictions (UP/DOWN).
   * *Strategy Classifier*: Analyzes market regimes (volatility, liquidity) to classify whether market conditions favor **Day Trading** or **Swing Trading**.
 * **`explainability.py`**: Generates SHAP summary values and individual feature attributions for any given prediction.
+* **`train.py`**: Offline training runner script designed to execute full retrains headlessly for CI/CD or MLOps jobs.
 
-### 5. API Layer (`src/api/`)
+### 6. API Layer (`src/api/`)
 * **`main.py`**: Sets up FastAPI middleware, CORS policies, and includes API routers.
 * **`endpoints/`**:
   * `/v1/predictions`: Exposes inference endpoints for price targets, movement, and strategy suitability.
   * `/v1/news`: Exposes sentiment analysis summaries for tickers.
   * `/v1/explain`: Serves calculated SHAP values and feature contribution breakdowns.
 * **`schemas/trading.py`**: Defines strict type validation for API requests and JSON responses.
+
+### 7. Automated Test Suite (`tests/`)
+* **`test_api.py`**: Tests HTTP status codes, JSON payload schemas, and response structure across FastAPI REST endpoints using httpx / TestClient.
+* **`test_data.py`**: Validates data ingestion schemas and PySpark technical indicator transformation correctness.
+* **`test_models.py`**: Ensures model artifacts load properly and return valid prediction objects and SHAP attributions.
 
 ---
 
@@ -224,8 +253,68 @@ Expose predictions and interpretations through FastAPI endpoints.
 
 ---
 
+## Phase 5: Model Tuning, Cross-Validation & Interpretability
+Optimize model performance, prevent lookahead bias, and extract deep feature contributions.
+
+1. **Time-Series Cross-Validation**
+   * Replaced random train-test splitting with `sklearn.model_selection.TimeSeriesSplit` to strictly eliminate lookahead bias across time-dependent financial market data.
+
+2. **Model Upgrading & Hyperparameter Tuning**
+   * Transitioned baseline estimators (`GradientBoostingRegressor`, `RandomForestClassifier`) to advanced gradient boosting algorithms (XGBoost / LightGBM) with optimized learning rates, max depth, and tree regularization parameters.
+
+3. **Advanced Model Evaluation**
+   * Evaluated regression models on target price predictions using **RMSE**, **MAE**, and **R²**.
+   * Assessed classification performance for market direction and trading strategy suitability using **Accuracy**, **Precision**, **Recall**, and **Weighted F1-Score**.
+
+4. **Deep SHAP Interpretability**
+   * Integrated `shap.TreeExplainer` in `notebooks/03_model_evaluation.ipynb` to generate interactive feature summary plots, waterfall plots, and individual attribution vectors.
+   * Quantified directional impacts of technical indicators (e.g., `rsi_14`, `sma_20`) and NLP sentiment scores (`compound_score`).
+
+5. **Artifact Export & Versioning**
+   * Serialized tuned model artifacts and exact feature matrices into `./models/` (`regressor.joblib`, `direction_clf.joblib`, `strategy_clf.joblib`) for zero-downtime serving by the FastAPI backend.
+
+---
+
+## Phase 6: Interactive React Frontend & Full-Stack Deployment
+Connect user interface elements to FastAPI endpoints and orchestrate production-ready containers.
+
+1. **Modern React UI Architecture**
+   * Developed a responsive, component-driven web dashboard built with **React** (Vite / Next.js) and **Tailwind CSS** for financial data visualization.
+
+2. **REST API Orchestration**
+   * Integrated real-time client-side fetching against FastAPI backend endpoints (`POST /v1/predictions`, `GET /v1/news/{ticker}`, `GET /v1/explain/{ticker}`).
+
+3. **Interactive Visualizations & Analytics**
+   * Rendered dynamic bar and waterfall charts to visually expose SHAP feature contributions (`compound_score`, `rsi_14`, `sma_20`) per stock prediction.
+   * Implemented visual gauge indicators for news sentiment and badge components for trading strategy suitability ("Day Trading" vs. "Swing Trading").
+
+4. **Full-Stack Containerized Orchestration**
+   * Containerized the frontend service with Docker and updated docker-compose.yml to orchestrate client-to-API network communication seamlessly across local development and production environments.
+
+---
+
+## Phase 7: Automated Testing, Quality Assurance & MLOps Infrastructure
+Ensure system resilience, data integrity, and API contract compliance across the multi-container stack.
+
+1. **Automated Unit & Integration Test Suite (`tests/`)**
+   * Implemented comprehensive test suites using pytest and httpx (TestClient) to validate FastAPI REST routes (/v1/predictions, /v1/news/{ticker}, /v1/explain/{ticker}) against strict Pydantic JSON schemas.
+   * Built unit tests in test_data.py to verify PySpark technical indicator calculations (RSI, Moving Averages, Bollinger Bands) and prevent schema regressions during data ingestion.
+   * Developed model sanity tests in test_models.py to verify that serialized .joblib model binaries load properly, execute inferences without memory leaks, and generate valid SHAP feature attribution objects.
+
+2. **Headless Model Retraining Runner (src/models/train.py)**
+   * Designed an automated, headless retraining script capable of pulling fresh historical data, recalculating sentiment and technical indicators, running time-series cross-validation, and serializing updated model artifacts into ./models/ without manual notebook execution.
+
+3. **Continuous Integration Pipeline (.github/workflows/)**
+   * Configured GitHub Actions CI workflows to execute automated linting (flake8 / black), type-checking (mypy), and pytest execution across pull requests, blocking regressions before code is merged into production branches.
+
+4. **Resilient Local & Cloud Fallback Architecture**
+   * Designed dual-mode data persistence enabling the app to operate in cloud-native environments via Databricks Delta Lake or locally via offline Parquet storage fallbacks when cloud tokens are unavailable.
+
+---
+
 ## Key Technical Considerations
 
 * **Lookahead Bias in Feature Engineering:** When calculating technical indicators or sentiment averages, ensure windows use strictly historical data relative to prediction time $t$.
 * **FastAPI Model Loading:** Avoid calling heavy initialization routines inside route functions. Use FastAPI's `lifespan` context manager in `main.py` to keep models ready in memory.
 * **Databricks Local Fallback:** Allow `databricks_client.py` to fall back to local file storage (Parquet/SQLite) when running offline or without active cloud credentials.
+* **Dynamic Configuration Management:** Load model hyperparameters, technical indicator windows, and NLP feature settings from YAML configuration files using PyYAML and Pydantic Settings, keeping ML configuration separate from application code and simplifying experimentation.

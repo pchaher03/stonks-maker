@@ -14,8 +14,8 @@ class NewsFetcher:
         Fetches news articles for a given ticker symbol.
         Tries NewsAPI first; falls back to yfinance news feed.
         """
-        ticker = ticker.upper()
-        if self.api_key and "your_" not in self.api_key:
+        ticker = ticker.upper().strip()
+        if self.api_key and "your_" not in self.api_key and len(self.api_key.strip()) > 0:
             try:
                 logger.info(f"Fetching news for {ticker} via NewsAPI...")
                 url = (
@@ -45,20 +45,17 @@ class NewsFetcher:
 
     def _fetch_yfinance_news(self, ticker: str, limit: int) -> pd.DataFrame:
         logger.info(f"Fetching news for {ticker} via yfinance fallback...")
-
         try:
             yf_ticker = yf.Ticker(ticker)
             news_data = yf_ticker.news or []
             articles = []
 
             for item in news_data[:limit]:
-                # Handle variations in yfinance news dictionary schema
                 content = item.get("content", {}) if isinstance(item.get("content"), dict) else item
                 title = content.get("title") or item.get("title", "")
                 summary = content.get("summary") or item.get("summary", "")
                 pub_time = content.get("pubDate") or item.get("providerPublishTime")
 
-                # Extract publish timestamp (handles pubDate or providerPublishTime)
                 provider_info = content.get("provider", {}) if isinstance(content.get("provider"), dict) else {}
                 publisher = (
                     provider_info.get("displayName")

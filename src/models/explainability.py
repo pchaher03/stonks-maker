@@ -1,13 +1,14 @@
-import shap
 import pandas as pd
 import numpy as np
-from typing import Dict, Any
+import shap
+from typing import Dict, Any, List, Optional
+from src.core.config import get_feature_list
 from src.core.logger import logger
 
 class ModelExplainer:
-    def __init__(self, model: Any, feature_names: list):
+    def __init__(self, model: Any, feature_names: Optional[List[str]] = None):
         self.model = model
-        self.feature_names = feature_names
+        self.feature_names = feature_names if feature_names else get_feature_list()
         self.explainer = shap.TreeExplainer(self.model)
 
     def explain_instance(self, instance_df: pd.DataFrame) -> Dict[str, Any]:

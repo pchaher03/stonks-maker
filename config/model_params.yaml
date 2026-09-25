@@ -1,19 +1,17 @@
 models:
   regression:
-    n_estimators: 100
-    learning_rate: 0.05
-    max_depth: 5
+    max_iter: 150
+    learning_rate: 0.03
+    max_depth: 4
     random_state: 42
 
   classification:
     direction:
       n_estimators: 100
-      learning_rate: 0.05
       max_depth: 4
       random_state: 42
     strategy:
       n_estimators: 100
-      learning_rate: 0.05
       max_depth: 4
       random_state: 42
 
