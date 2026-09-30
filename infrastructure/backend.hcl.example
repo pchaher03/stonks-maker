@@ -1,0 +1,5 @@
+bucket = "<backends-terraform --- example name of your bucket>"
+key    = "<terraform-backend/terraform.tfstate --- example key to backend>"
+region = "<us-east-1 --- region of your s3 bucket>" 
+encrypt = true
+use_lockfile = true
