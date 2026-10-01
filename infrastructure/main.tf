@@ -15,4 +15,5 @@ module "databricks" {
   project_name = var.project_name
   resource_group_name = module.resource_group.name
   resource_group_location = module.resource_group.location
+  access_connector_id = module.storage_security.access_connector_id
 }
