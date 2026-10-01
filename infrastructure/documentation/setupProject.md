@@ -7,3 +7,8 @@
 terraform init -backend-config="backend.hcl"
 ```
 ***Be aware that you are running this commands from `/infrastructure` folder***
+
+```bash
+terraform plan
+terraform apply
+```
