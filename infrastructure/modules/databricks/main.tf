@@ -101,3 +101,72 @@ resource "databricks_repo" "stonks_maker_repo" {
   # Optional: You can specify a specific path in the workspace. 
   # If omitted, Databricks creates it in your user's Repo folder automatically.
 }
+
+data "databricks_node_type" "available_node" {
+  local_disk    = true
+  min_cores     = 4
+  min_memory_gb = 14
+}
+
+resource "databricks_job" "market_data_pipeline" {
+  name = "Stonks_Maker_Daily_Ingestion"
+
+  # 1. Ephemeral Job Cluster (Cost Optimization)
+  job_cluster {
+    job_cluster_key = "ingestion_cluster"
+    new_cluster {
+      spark_version      = "14.3.x-scala2.12"
+      node_type_id       = data.databricks_node_type.available_node.id
+      
+      # 1. Set workers to 0 (Driver does all the work)
+      num_workers        = 0
+      
+      # 2. Tell Spark to run locally on a single machine
+      spark_conf = {
+        "spark.databricks.cluster.profile" = "singleNode"
+        "spark.master"                     = "local[*]"
+      }
+      
+      # 3. Tell Databricks to provision this as a Single Node cluster
+      custom_tags = {
+        "ResourceClass" = "SingleNode"
+      }
+
+      data_security_mode = "SINGLE_USER"
+    }
+  }
+
+  # 2. Task 1: OHLCV Ingestion
+  task {
+    task_key        = "ohlcv_ingestion"
+    job_cluster_key = "ingestion_cluster"
+
+    spark_python_task {
+      # Dynamically maps to the Git repo synced in Step 4
+      python_file = "${databricks_repo.stonks_maker_repo.workspace_path}/infrastructure/scripts/databricks_ohlcv_ingestion.py"
+    }
+  }
+
+  # 3. Task 2: News Ingestion (Runs in parallel with OHLCV)
+  task {
+    task_key        = "news_ingestion"
+    job_cluster_key = "ingestion_cluster"
+
+    spark_python_task {
+      python_file = "${databricks_repo.stonks_maker_repo.workspace_path}/infrastructure/scripts/databricks_news_ingestion.py"
+    }
+
+    # Dynamically installs external pip packages when the cluster boots
+    library {
+      pypi {
+        package = "yfinance"
+      }
+    }
+  }
+
+  # 4. Schedule: 6:00 PM EST, Monday through Friday (Post-market close)
+  schedule {
+    quartz_cron_expression = "0 0 18 ? * MON-FRI"
+    timezone_id            = "America/New_York"
+  }
+}

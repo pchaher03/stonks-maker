@@ -26,6 +26,14 @@
         This was done by creating the variables to each api, then we add a new secret resource to the `key vault` resource in the storage_security module.
     2. Step 2: Create a Key Vault-Backed Secret Scope (Terraform): To this step we have added the secrets, and the secret scope in the `databricks` module. We have also add a new `azurerm_key_vault_access_policy` to handle the permission needed by the secret scope.
     3. Step 3: Refactor Python Code for Databricks Native Execution: for this step we create the scripts folder with the scripts that will be used in databricks for the ingestion process. 
-    4. Step 4: Sync Application Code to Databricks Workspace
-    5. Step 5: Provision Databricks Workflows (Jobs) via Terraform
+    4. Step 4: Sync Application Code to Databricks Workspace: we have added a git repo resource in `databrick` module, this to sync the code running in databricks with the code in the repo.
+    5. Step 5: Provision Databricks Workflows (Jobs) via Terraform: we just added a new job that run the ingestion scripts
 
+4. Process for trigger the workflows
+    There is some way the workflow runs:   
+    2. by trigger manually.
+    3. it will run daily at the 6PM
+
+Consideration for the scripts
+    1. for `databricks_ohlcv_ingestion.py` you need to change `outputsize="full"` at the first time to download the data of one year, after this you need to change to `outputsize="compact"` for daily downloads.
+    2. 
