@@ -15,25 +15,23 @@
 
 2. The second step involves configuring the connection between Databricks and our storage account:
     1. Provision an Azure Databricks access connector (Azure provider): this was done using the `azurerm_databricks_access_connector` resource added to the `storage_security` module.
-    2. Assign storage permissions (Azure provider): an `azurerm_role_assignment` was associated with the `storage_security` module.
-    3. Create a Unity Catalog storage credential (Databricks provider): `databricks_storage_credential` was added to the `databricks` module, using the Databricks provider.
-    4. Map external locations (Databricks provider): `databricks_external_location` was added for the *bronze*, *silver*, *gold*, and *managed* containers (the latter is required for Databricks to store managed tables and to create the catalog resource in the next step) within the `databricks` module.
-    5. Define catalogs and schemas (Databricks provider): we added the catalog and schemas to the `databricks` module. 6. If this point is reached, the connection to the storage data lake has been completed.
+    2. Assign storage permissions (Azure provider): an `azurerm_role_assignment` resource was associated with the `storage_security` module.
+    3. Create a Unity Catalog storage credential (Databricks provider): a `databricks_storage_credential` was added to the `databricks` module, using the Databricks provider.
+    4. Map external locations (Databricks provider): a `databricks_external_location` was added for the *bronze*, *silver*, *gold*, and *managed* containers (the latter is required for Databricks to store managed tables and to create the catalog resource in the next step) within the `databricks` module.
+    5. Define catalogs and schemas (Databricks provider): we added the catalog and schemas to the `databricks` module. 6. At this point, the connection to the storage data lake is complete.
 
 
 3. Roadmap for creating Spark jobs to ingest data from APIs into Databricks.
-    1. Step 1: Store API Credentials in Azure Key Vault (Terraform)
-        This was done by creating the variables to each api, then we add a new secret resource to the `key vault` resource in the storage_security module.
-    2. Step 2: Create a Key Vault-Backed Secret Scope (Terraform): To this step we have added the secrets, and the secret scope in the `databricks` module. We have also add a new `azurerm_key_vault_access_policy` to handle the permission needed by the secret scope.
-    3. Step 3: Refactor Python Code for Databricks Native Execution: for this step we create the scripts folder with the scripts that will be used in databricks for the ingestion process. 
-    4. Step 4: Sync Application Code to Databricks Workspace: we have added a git repo resource in `databrick` module, this to sync the code running in databricks with the code in the repo.
-    5. Step 5: Provision Databricks Workflows (Jobs) via Terraform: we just added a new job that run the ingestion scripts
+    1. Step 1: Store API credentials in Azure Key Vault (Terraform)
+    This was done by creating variables for each API and adding a new secret resource to the `key vault` resource in the `storage_security` module.
+    2. Step 2: Create a Key Vault-backed secret scope (Terraform): in this step, we added the secrets and the secret scope to the `databricks` module. We also added a new access policy (`azurerm_key_vault_access_policy`) to manage the permissions required for the secrets scope.
+    3. Step 3: Refactor the Python code for native execution in Databricks: for this step, we created a `scripts` folder containing the scripts to be used in Databricks for the ingestion process. 4. Step 4: Synchronize the application code with the Databricks workspace: we added a Git repository resource to the `databricks` module to synchronize the code running in Databricks with the code in the repository.
+    5. Step 5: Provision Databricks workflows (Jobs) using Terraform: we just added a new job that executes the ingestion scripts.
 
-4. Process for trigger the workflows
-    There is some way the workflow runs:   
-    2. by trigger manually.
-    3. it will run daily at the 6PM
+4. Workflow activation process
+    There are several ways to execute the workflow:
+    2. via manual activation.
+    3. it will run daily at 18:00.
 
-Consideration for the scripts
-    1. for `databricks_ohlcv_ingestion.py` you need to change `outputsize="full"` at the first time to download the data of one year, after this you need to change to `outputsize="compact"` for daily downloads.
-    2. 
+Script considerations
+1. For `databricks_ohlcv_ingestion.py`, it is necessary to set `outputsize="full"` initially to download one year's worth of data; subsequently, it should be changed to `outputsize="compact"` for daily downloads.

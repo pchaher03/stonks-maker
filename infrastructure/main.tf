@@ -20,4 +20,6 @@ module "databricks" {
   access_connector_id = module.storage_security.access_connector_id
   key_vault_id  = module.storage_security.key_vault_id
   key_vault_uri = module.storage_security.key_vault_uri
+  git_url = var.git_url
+  git_branch = var.git_branch
 }

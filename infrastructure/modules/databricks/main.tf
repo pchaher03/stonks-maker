@@ -34,6 +34,7 @@ resource "databricks_external_location" "managed" {
   url             = "abfss://managed@storage${var.project_name}.dfs.core.windows.net/"
   credential_name = databricks_storage_credential.external_mi.id
   comment         = "Default Managed Storage for Stonks Catalog"
+  force_destroy   = true
 }
 
 resource "databricks_external_location" "bronze" {
@@ -41,6 +42,7 @@ resource "databricks_external_location" "bronze" {
   url             = "abfss://bronze@storage${var.project_name}.dfs.core.windows.net/"
   credential_name = databricks_storage_credential.external_mi.id
   comment         = "Bronze Medallion Layer - Managed by Terraform"
+  force_destroy   = true
 }
 
 resource "databricks_external_location" "silver" {
@@ -48,6 +50,7 @@ resource "databricks_external_location" "silver" {
   url             = "abfss://silver@storage${var.project_name}.dfs.core.windows.net/"
   credential_name = databricks_storage_credential.external_mi.id
   comment         = "Silver Medallion Layer - Managed by Terraform"
+  force_destroy   = true
 }
 
 resource "databricks_external_location" "gold" {
@@ -55,6 +58,7 @@ resource "databricks_external_location" "gold" {
   url             = "abfss://gold@storage${var.project_name}.dfs.core.windows.net/"
   credential_name = databricks_storage_credential.external_mi.id
   comment         = "Gold Medallion Layer - Managed by Terraform"
+  force_destroy   = true
 }   
 
 
@@ -62,6 +66,7 @@ resource "databricks_catalog" "stonks_catalog" {
   name    = "stonks_catalog"
   comment = "Main catalog for the Stonks Maker project - Managed by Terraform"
   storage_root = databricks_external_location.managed.url
+  force_destroy   = true
 } 
 
 resource "databricks_schema" "bronze" {
@@ -69,6 +74,7 @@ resource "databricks_schema" "bronze" {
   name         = "bronze"
   comment      = "Bronze Layer: Raw Data Ingestion (OHLCV & News Feeds)"
   storage_root = databricks_external_location.bronze.url
+  force_destroy   = true
 }
 
 resource "databricks_schema" "silver" {
@@ -76,6 +82,7 @@ resource "databricks_schema" "silver" {
   name         = "silver"
   comment      = "Silver Layer: PySpark Transformations (Indicators & Sentiment)"
   storage_root = databricks_external_location.silver.url
+  force_destroy   = true
 }
 
 resource "databricks_schema" "gold" {
@@ -83,6 +90,7 @@ resource "databricks_schema" "gold" {
   name         = "gold"
   comment      = "Gold Layer: Feature Matrices (Joined on Date/Ticker)"
   storage_root = databricks_external_location.gold.url
+  force_destroy   = true
 }
 
 resource "databricks_secret_scope" "kv_scope" {
@@ -96,8 +104,8 @@ resource "databricks_secret_scope" "kv_scope" {
 
 resource "databricks_repo" "stonks_maker_repo" {
   # The URL to your GitHub repository
-  url    = "https://github.com/pchaher03/stonks-maker.git"
-  branch = "feat-terraform"
+  url    = var.git_url
+  branch = var.git_branch
   # Optional: You can specify a specific path in the workspace. 
   # If omitted, Databricks creates it in your user's Repo folder automatically.
 }
@@ -106,6 +114,7 @@ data "databricks_node_type" "available_node" {
   local_disk    = true
   min_cores     = 4
   min_memory_gb = 14
+  depends_on = [azurerm_databricks_workspace.databricks_workspace]
 }
 
 resource "databricks_job" "market_data_pipeline" {

@@ -105,6 +105,7 @@ if __name__ == "__main__":
     
     for ticker in tickers_to_update:
         # Set to "full" to trigger the backfill. AV will block it, and YF will fetch the max history.
+        # change to "compact" for daily updates only.
         pdf = fetch_alpha_vantage_daily(ticker, outputsize="full")
         if not pdf.empty:
             all_data.append(pdf)
