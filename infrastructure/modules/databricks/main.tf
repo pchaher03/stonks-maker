@@ -84,3 +84,20 @@ resource "databricks_schema" "gold" {
   comment      = "Gold Layer: Feature Matrices (Joined on Date/Ticker)"
   storage_root = databricks_external_location.gold.url
 }
+
+resource "databricks_secret_scope" "kv_scope" {
+  name = "stonks_secrets"
+
+  keyvault_metadata {
+    resource_id = var.key_vault_id
+    dns_name    = var.key_vault_uri
+  }
+}
+
+resource "databricks_repo" "stonks_maker_repo" {
+  # The URL to your GitHub repository
+  url    = "https://github.com/pchaher03/stonks-maker.git"
+  branch = "feat-terraform"
+  # Optional: You can specify a specific path in the workspace. 
+  # If omitted, Databricks creates it in your user's Repo folder automatically.
+}
