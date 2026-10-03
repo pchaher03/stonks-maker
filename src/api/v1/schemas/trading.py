@@ -11,12 +11,20 @@ class PredictionResponse(BaseModel):
     direction: str
     recommended_strategy: str
 
+class ArticleItem(BaseModel):
+    title: str
+    source: Optional[str] = "Financial News"
+    timestamp: Optional[str] = None
+    url: Optional[str] = "#"
+    compound_score: Optional[float] = 0.0
+
 class SentimentResponse(BaseModel):
     ticker: str
     compound_score: float
     pos_score: float
     neg_score: float
     neu_score: float
+    articles: Optional[List[ArticleItem]] = []
 
 class ExplanationResponse(BaseModel):
     ticker: str
