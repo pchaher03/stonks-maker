@@ -11,6 +11,11 @@ __pycache__/
 .venv/
 venv/
 
+# Node / React Frontend
+frontend/node_modules/
+frontend/dist/
+node_modules/
+
 # Jupyter Checkpoints
 .ipynb_checkpoints/
 

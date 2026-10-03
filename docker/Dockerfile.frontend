@@ -1,0 +1,16 @@
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copy package management definitions from frontend/ directory
+COPY frontend/package*.json ./
+
+# Clean install dependencies specifically inside Alpine Linux
+RUN npm install
+
+# Copy all source files from frontend/ directory into the image
+COPY frontend/ .
+
+EXPOSE 5173
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
