@@ -15,6 +15,18 @@ from src.nlp.sentiment_analyzer import SentimentAnalyzer
 
 router = APIRouter()
 
+def parse_horizon_days(horizon_input: Any) -> int:
+    """Converts horizon inputs (int or string like '1D', '5D', '1M') to trading days."""
+    if isinstance(horizon_input, int):
+        return max(1, horizon_input)
+    
+    mapping = {
+        "1D": 1,
+        "5D": 5,
+        "1M": 21,
+    }
+    return mapping.get(str(horizon_input).upper(), 1)
+
 def compute_pandas_indicators(df: pd.DataFrame) -> pd.DataFrame:
     """Computes technical indicators using pure Pandas."""
     df = df.copy()
@@ -46,6 +58,8 @@ def get_prediction(
         strat_model = models["strat_model"]
         features = models["features"]
 
+        horizon_days = payload.horizon or 1
+
         # 1. Fetch market data & compute technical indicators
         ohlcv = ingestion.fetch_daily_ohlcv(payload.ticker)
         indicators = compute_pandas_indicators(ohlcv)
@@ -63,19 +77,27 @@ def get_prediction(
 
         X = latest[features]
 
-        # 4. Perform live model inferences
-        predicted_return = float(reg_model.predict(X)[0])
+        # 4. Perform inferences
+        daily_predicted_return = float(reg_model.predict(X)[0])
         current_price = float(latest["close"].iloc[-1])
-        target_price = current_price * (1 + predicted_return)
 
-        direction_pred = dir_model.predict(X)[0]
-        strategy_pred = strat_model.predict(X)[0]
+        # Scale expected return compound rate across horizon days
+        horizon_predicted_return = ((1 + daily_predicted_return) ** horizon_days) - 1
+        target_price = current_price * (1 + horizon_predicted_return)
+
+        if horizon_days == 1:
+            direction_pred = dir_model.predict(X)[0]
+            direction = "UP" if direction_pred == 1 else "DOWN"
+            recommended_strategy = str(strat_model.predict(X)[0])
+        else:
+            direction = "UP" if horizon_predicted_return >= 0 else "DOWN"
+            recommended_strategy = "Swing Trading"
 
         return PredictionResponse(
             ticker=payload.ticker,
             target_price=round(target_price, 2),
-            direction="UP" if direction_pred == 1 else "DOWN",
-            recommended_strategy=str(strategy_pred)
+            direction=direction,
+            recommended_strategy=recommended_strategy
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
