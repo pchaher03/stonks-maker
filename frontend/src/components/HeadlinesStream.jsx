@@ -1,5 +1,5 @@
 import React from 'react';
-import { Newspaper, ExternalLink, Clock, Tag } from 'lucide-react';
+import { Newspaper, Clock, Tag } from 'lucide-react';
 
 export default function HeadlinesStream({ articles, loading, className = '' }) {
   // Skeleton / Loading State
@@ -49,7 +49,6 @@ export default function HeadlinesStream({ articles, loading, className = '' }) {
 
   // Helper to determine headline sentiment badge color & text
   const getSentimentBadge = (article) => {
-    // If individual article score is provided or fallback to compound
     const score = article.compound_score ?? article.sentiment_score ?? 0;
 
     if (score >= 0.05) {
@@ -66,7 +65,7 @@ export default function HeadlinesStream({ articles, loading, className = '' }) {
       );
     }
     return (
-      <span className={`text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider ${className}`}>
+      <span className="text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
         Neutral
       </span>
     );
@@ -107,7 +106,7 @@ export default function HeadlinesStream({ articles, loading, className = '' }) {
             </div>
 
             {/* Sub-meta: Source & Timestamp */}
-            <div className="flex items-center gap-4 mt-2 text.xs text-slate-400 font-mono text-[11px]">
+            <div className="flex items-center gap-4 mt-2 text-xs text-slate-400 font-mono text-[11px]">
               <span className="flex items-center gap-1 text-slate-400">
                 <Tag size={12} className="text-slate-500" />
                 {item.source || 'Financial News'}
