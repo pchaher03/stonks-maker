@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import yfinance as yf
 from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
 from src.api.v1.schemas.trading import PredictionRequest, PredictionResponse
@@ -61,11 +62,20 @@ def get_prediction(
         horizon_days = payload.horizon or 1
 
         # 1. Fetch market data & compute technical indicators
-        ohlcv = ingestion.fetch_daily_ohlcv(payload.ticker)
+        symbol = payload.ticker.upper().strip()
+        ohlcv = ingestion.fetch_daily_ohlcv(symbol)
         indicators = compute_pandas_indicators(ohlcv)
 
+        # Fetch the latest company name if available
+        company_name = symbol
+        try:
+            ticker_info = yf.Ticker(symbol).info
+            company_name = ticker_info.get("shortName") or ticker_info.get("longName") or symbol
+        except Exception:
+            company_name = symbol  # Fallback to symbol if network metadata lookup fails
+
         # 2. Fetch news & compute sentiment features
-        news = news_fetcher.fetch_ticker_news(payload.ticker, limit=10)
+        news = news_fetcher.fetch_ticker_news(symbol, limit=10)
         sentiment = analyzer.add_sentiment_features(news, text_column="text")
 
         # 3. Assemble single-row feature vector
@@ -94,7 +104,9 @@ def get_prediction(
             recommended_strategy = "Swing Trading"
 
         return PredictionResponse(
-            ticker=payload.ticker,
+            ticker=symbol,
+            company_name=company_name,
+            current_price=round(current_price, 2),
             target_price=round(target_price, 2),
             direction=direction,
             recommended_strategy=recommended_strategy

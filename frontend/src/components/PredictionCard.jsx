@@ -1,11 +1,11 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, Shield, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Shield, ArrowUpRight, ArrowDownRight, DollarSign } from 'lucide-react';
 
 export default function PredictionCard({ data, loading, className = '' }) {
   // Skeleton / Loading State
   if (loading) {
     return (
-      <div className={`bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg animate-pulse flex flex-col justify-between h-52 ${className}`}>
+      <div className={`bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg animate-pulse flex flex-col justify-between h-56 ${className}`}>
         <div className="flex justify-between items-center">
           <div className="h-4 bg-slate-700 rounded w-1/3"></div>
           <div className="h-6 bg-slate-700 rounded-full w-16"></div>
@@ -22,25 +22,35 @@ export default function PredictionCard({ data, loading, className = '' }) {
   // Fallback if data hasn't loaded yet
   if (!data) {
     return (
-      <div className={`bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg flex items-center justify-center h-52 text-slate-500 ${className}`}>
+      <div className={`bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg flex items-center justify-center h-56 text-slate-500 ${className}`}>
         <p className="text-sm">Select a ticker to view prediction insights.</p>
       </div>
     );
   }
 
   const isUp = data.direction === 'UP';
+  const currentPrice = typeof data.current_price === 'number' ? data.current_price : null;
+  const targetPrice = typeof data.target_price === 'number' ? data.target_price : null;
+
+  // Calculate percentage change between current price and target price
+  const percentChange = currentPrice && targetPrice 
+    ? (((targetPrice - currentPrice) / currentPrice) * 100).toFixed(2)
+    : null;
 
   return (
     <div className={`bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg flex flex-col justify-between hover:border-slate-600 transition-all ${className}`}>
-      {/* Header: Widget Title & Directional Badge */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
-          <h3 className="text-slate-400 font-semibold text-xs uppercase tracking-wider">
-            Model Inference
-          </h3>
-          <span className="text-[10px] bg-slate-700/60 text-slate-300 px-1.5 py-0.5 rounded font-mono">
-            {data.ticker}
-          </span>
+      {/* Header: Company Name, Ticker Badge & Directional Badge */}
+      <div className="flex justify-between items-start mb-2">
+        <div>
+          <div className="flex items-center gap-2">
+            <h3 className="text-white font-bold text-base tracking-wide">
+              {data.company_name || data.ticker}
+            </h3>
+            <span className="text-[10px] bg-slate-700/80 text-emerald-400 px-1.5 py-0.5 rounded font-mono font-semibold border border-slate-600">
+              {data.ticker}
+            </span>
+          </div>
+          <span className="text-[11px] text-slate-400 block mt-0.5">Model Inference</span>
         </div>
 
         {/* Direction Badge */}
@@ -56,28 +66,39 @@ export default function PredictionCard({ data, loading, className = '' }) {
         </span>
       </div>
 
-      {/* Primary Value: Target Price & Target Return */}
-      <div className="my-2">
-        <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-extrabold text-white tracking-tight">
-            ${typeof data.target_price === 'number' ? data.target_price.toFixed(2) : data.target_price}
-          </span>
-          <span
-            className={`flex items-center text-xs font-bold ${
-              isUp ? 'text-emerald-400' : 'text-rose-400'
-            }`}
-          >
-            {isUp ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-            {isUp ? 'Bullish Target' : 'Bearish Target'}
-          </span>
+      {/* Primary Value Container: Target Price & Most Recent Closed Price */}
+      <div className="my-3 p-3 bg-slate-900/60 rounded-lg border border-slate-700/50">
+        <div className="flex items-baseline justify-between">
+          {/* Target Price */}
+          <div>
+            <span className="text-[10px] text-slate-400 block font-mono uppercase tracking-wider">
+              Target Price
+            </span>
+            <div className="flex items-baseline gap-1.5 mt-0.5">
+              <span className="text-2xl font-extrabold text-white tracking-tight font-mono">
+                ${targetPrice !== null ? targetPrice.toFixed(2) : 'N/A'}
+              </span>
+              <span className={`flex items-center text-xs font-bold ${isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {isUp ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                {percentChange !== null ? `${percentChange > 0 ? '+' : ''}${percentChange}%` : ''}
+              </span>
+            </div>
+          </div>
+
+          {/* Most Recent Closed Day Stock Price */}
+          <div className="text-right">
+            <span className="text-[10px] text-slate-400 block font-mono uppercase tracking-wider">
+              Last Close
+            </span>
+            <span className="text-lg font-bold text-slate-300 font-mono block mt-0.5">
+              {currentPrice !== null ? `$${currentPrice.toFixed(2)}` : 'N/A'}
+            </span>
+          </div>
         </div>
-        <p className="text-[11px] text-slate-400 mt-1">
-          Estimated price target for selected horizon
-        </p>
       </div>
 
       {/* Footer: Strategy Suitability Badge */}
-      <div className="flex items-center justify-between border-t border-slate-700/80 pt-3 mt-2">
+      <div className="flex items-center justify-between border-t border-slate-700/80 pt-3">
         <div className="flex items-center gap-1.5 text-xs text-slate-300">
           <Shield size={15} className="text-indigo-400" />
           <span>Strategy Fit:</span>

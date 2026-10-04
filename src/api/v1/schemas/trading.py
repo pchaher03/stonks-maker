@@ -7,6 +7,8 @@ class PredictionRequest(BaseModel):
 
 class PredictionResponse(BaseModel):
     ticker: str
+    company_name: Optional[str] = None
+    current_price: float
     target_price: float
     direction: str
     recommended_strategy: str
