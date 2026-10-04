@@ -13,7 +13,6 @@ TICKER_ALIASES = {
     "GOOG": {"GOOG", "GOOGL"},
 }
 
-
 class NewsFetcher:
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or settings.NEWS_API_KEY
