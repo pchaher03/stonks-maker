@@ -28,14 +28,23 @@ export default function PredictionCard({ data, loading, className = '' }) {
     );
   }
 
-  const isUp = data.direction === 'UP';
   const currentPrice = typeof data.current_price === 'number' ? data.current_price : null;
   const targetPrice = typeof data.target_price === 'number' ? data.target_price : null;
 
-  // Calculate percentage change between current price and target price
-  const percentChange = currentPrice && targetPrice 
-    ? (((targetPrice - currentPrice) / currentPrice) * 100).toFixed(2)
+  const changeValue =
+  currentPrice !== null && targetPrice !== null && currentPrice !== 0
+    ? ((targetPrice - currentPrice) / currentPrice) * 100
     : null;
+
+  // Calculate percentage change between current price and target price
+  const percentChange = changeValue !== null ? changeValue.toFixed(2) : null;
+
+  // Prefer the real price movement; fall back to the label (normalized)
+  const labelIsUp = String(data.direction || '').trim().toUpperCase() === 'UP';
+  const isUp = changeValue !== null ? changeValue >= 0 : labelIsUp;
+
+  // What the badge displays, so text always matches color
+  const directionLabel = isUp ? 'UP' : 'DOWN';
 
   return (
     <div className={`bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg flex flex-col justify-between hover:border-slate-600 transition-all ${className}`}>
@@ -62,7 +71,7 @@ export default function PredictionCard({ data, loading, className = '' }) {
           }`}
         >
           {isUp ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-          {data.direction}
+          {directionLabel}
         </span>
       </div>
 
