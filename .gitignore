@@ -52,3 +52,25 @@ data/processed/
 .idea/
 .DS_Store
 Thumbs.db
+
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+# variables
+*.tfvars
+*.tfvars.json
+
+#enviroment variables
+.env
+
+#backend info
+backend.hcl
+*.hcl
+
+# keys
+rsa_key.p8
+rsa_key.pub
